@@ -1,22 +1,32 @@
-{-# LANGUAGE TemplateHaskell, ViewPatterns #-}
+{-# LANGUAGE TemplateHaskell, ViewPatterns, MagicHash, ScopedTypeVariables, UnboxedTuples #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns -fno-warn-name-shadowing #-}
 
-module Data.Packed.Syntax(vec, mat) where
+module Data.Packed.Syntax(vec, mat, literalVec, literalMat) where
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote as TH
 import Language.Haskell.TH.Syntax as TH
 
-import Language.Haskell.Exts as HSE
+import Language.Haskell.Exts as HSE hiding(Literal)
 import qualified Language.Haskell.Meta.Syntax.Translate as MT
 
 import Data.Packed.Vector
 import Data.Packed.Matrix
 import Data.Packed.ST
-import Data.Packed.Internal(at', atM')
-import Data.Packed.Development(MatrixOrder(..))
+import Data.Packed.Internal(at', atM', unsafeWith)
+import Data.Packed.Development(MatrixOrder(..), unsafeFromForeignPtr)
 
 import Control.Applicative
+
+import Foreign hiding(unsafePerformIO)
+import GHC.CString
+import GHC.Exts
+import Foreign.C.String
+import GHC.IO hiding (unsafePerformIO)
+import System.IO.Unsafe(unsafePerformIO)
+import GHC.Prim(Addr#, realWorld#)
+import GHC.Ptr(Ptr(..))
+
 
 -- | Quasiquoter for vectors. For example, use as an expression:
 --
@@ -141,3 +151,35 @@ buildToLists r c =
            else Just 
                 $( TH.listE [ TH.listE [ [| atM' m ir ic |] | ic <- [0..c-1] ] | ir <- [0..r-1] ] )
    |]
+
+--------------- literals as addresses
+inlinePerformIO :: IO a -> a
+inlinePerformIO (IO m) = case m realWorld# of (# _, r #) -> r
+{-# INLINE inlinePerformIO #-}
+
+-- based on RULES in Data.ByteString.Char8
+vecFromAddress :: Storable a => Addr# -> Int -> Vector a
+vecFromAddress addr# n = unsafeFromForeignPtr fp 0 n where
+  fp = inlinePerformIO (newForeignPtr_ (Ptr addr#))
+
+-- convert vector to a string suitable for a StringPrimL
+vecToString :: forall a. Storable a => Vector a -> String
+vecToString v = unsafePerformIO (unsafeWith v (\p -> myPeekCStringLen (castPtr p, dim v * sizeOf (undefined :: a))))
+
+myPeekCStringLen (Ptr addr, I# len) = return $ unpackNBytes# addr len
+
+class Storable a => Literal a where
+   -- | Template Haskell representation of the type. The first
+  -- parameter is unused.
+   thType :: a -> TH.TypeQ
+
+literalVec :: forall a. Literal a => Vector a -> ExpQ
+literalVec v = [| vecFromAddress $(litE (StringPrimL (vecToString v))) n :: Vector $(thType (undefined :: a)) |] --(return $ thType (undefined :: a))
+  where
+    n = dim v
+
+instance Literal Double where
+  thType _ = [t| Double |]
+
+literalMat :: Matrix a -> ExpQ
+literalMat = undefined
