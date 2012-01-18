@@ -3,20 +3,16 @@
 
 module Data.Packed.Syntax(vec, mat) where
 
+import Data.Packed.Syntax.Internal
+
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote as TH
 import Language.Haskell.TH.Syntax as TH
 
-import Language.Haskell.Exts as HSE
-import qualified Language.Haskell.Meta.Syntax.Translate as MT
-
 import Data.Packed.Vector
 import Data.Packed.Matrix
 import Data.Packed.ST
-import Data.Packed.Internal(at', atM')
-import Data.Packed.Development(MatrixOrder(..))
-
-import Control.Applicative
+import Data.Packed.Development(MatrixOrder(..), at', atM')
 
 -- | Quasiquoter for vectors. For example, use as an expression:
 --
@@ -50,18 +46,14 @@ mat = qq matExp matPat
 
 qq exp pat = QuasiQuoter exp pat (const $ fail "Type quasiquotes not supported") (const $ fail "Declaration quasiquotes not supported")
 
-wrap s = "[" ++ s ++ "]"
-
 
 -- TODO: remove the intermediate lists in the following
 
 -- approach to parsing vectors: surround with [] brackets and parse as a list
 
-vecExp :: String -> Q TH.Exp
-vecExp s = case parseExp (wrap s) of
-  ParseOk (List es) -> buildVectorST (map MT.toExp es)
-  ParseOk _ -> fail "unexpected parse"
-  ParseFailed _loc msg -> fail msg
+vecExp s = case listExp s of
+  Right es -> buildVectorST es
+  Left msg -> fail msg
 
 buildVectorST es = 
   [| runSTVector (do
@@ -71,46 +63,23 @@ buildVectorST es =
                         in buildWrites 0 es)
                      return v) |]
 
-buildToList n = [| \vec -> if dim vec /= n then Nothing 
-                           else Just 
-                                $(let buildList i | i == n    = [| [] |]
-                                                  | otherwise = [| at' vec i : $(buildList (i+1)) |]
-                                  in buildList 0) |]
-  
+buildToList n =
+  [| \vec -> if dim vec /= n
+             then Nothing
+             else Just $(let
+               buildList i | i == n    = [| [] |]
+                           | otherwise = [| at' vec i : $(buildList (i+1)) |]
+               in buildList 0) |]
+
 vecPat :: String -> Q TH.Pat
-vecPat s = case parsePat (wrap s) of
-  ParseOk l@(PList ps) -> viewP (buildToList (length ps)) (conP 'Just [return $ MT.toPat l])
-  ParseOk _ -> fail "unexpected parse"
-  ParseFailed _loc msg -> fail msg
+vecPat s = case listPat s of
+  Right ps ->
+    let l = ListP ps in viewP (buildToList (length ps)) (conP 'Just [return l])
+  Left msg -> fail msg
 
-
--- approach to parsing matrices: surround with [] brackets, and repeatedly parse. Will get a parse error with message semiParseError when we encounter an "unexpected" semicolon: we break at this point, and continue parsing
-semiParseError = "Parse error: ;"
-
--- | find the location in the given string, returning everything strictly before; and everything strictly after
--- the character *at* the location is dropped
-splitAtLoc :: SrcLoc -> String -> (String, String)
-splitAtLoc loc s = case splitAt (srcLine loc - 1) (lines s) of
-  (linesBefore, line:linesAfter) -> case splitAt (srcColumn loc - 1) line of
-    (lineStart, _:lineEnd) -> (concat linesBefore ++ lineStart, lineEnd ++ concat linesAfter)
-
-breakOnSemis :: (String -> ParseResult res) -> String -> ParseResult [res]
-breakOnSemis parse s = case parse wrapped_s of
-  ParseOk r -> ParseOk [r]
-  ParseFailed loc msg | msg == semiParseError -> 
-    case splitAtLoc loc wrapped_s of
-      ('[': h, init -> t) -> (:) <$> parse (wrap h) <*> breakOnSemis parse t
-                      | otherwise -> ParseFailed loc msg
- where wrapped_s = wrap s
-
-unList (List l) = l
-matExp s = case breakOnSemis parseExp s of
-  ParseOk rows@(r:_) -> let rowLen = length (unList r)
-                        in
-                         if all (\r' -> length (unList r') == length (unList r)) rows 
-                         then buildMatST (map (map MT.toExp . unList) rows)
-                         else fail "Not all rows have the same length"
-  ParseFailed _loc msg -> fail msg
+matExp s = case matListExp s of
+  Right (_, _, rows) -> buildMatST rows                                                         
+  Left msg -> fail msg
 
 buildMatST :: [[TH.Exp]] -> Q TH.Exp
 buildMatST es =
@@ -125,16 +94,11 @@ buildMatST es =
           return m
        ) |]
 
-unPList (PList l) = l
-
-matPat s = case breakOnSemis parsePat s of
-  ParseOk rows@(r:_) -> let rowLen = length (unPList r)
-                            colLen = length rows
-                        in
-                         if all (\r' -> length (unPList r') == length (unPList r)) rows 
-                         then viewP (buildToLists colLen rowLen) (conP 'Just [return $ ListP (map MT.toPat rows)])
-                         else fail "Not all rows have the same length"
-  ParseFailed _loc msg -> fail msg
+matPat s = case matListPat s of
+  Right (rowLen, colLen, rows) ->
+    viewP (buildToLists colLen rowLen) 
+          (conP 'Just [return $ ListP $ map ListP rows])
+  Left msg -> fail msg
 
 buildToLists r c =
   [| \m -> if (rows m, cols m) /= (r, c) then Nothing

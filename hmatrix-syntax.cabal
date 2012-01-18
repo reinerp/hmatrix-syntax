@@ -18,11 +18,12 @@ Cabal-version:       >=1.2
 
 Library
   Exposed-modules:     Data.Packed.Syntax
+                       Data.Packed.Syntax.Internal
   Build-depends:       base,
                        ghc-prim,
                        haskell-src-exts,
                        haskell-src-meta,
                        hmatrix,
-                       template-haskell >= 2.7 && < 2.9
+                       template-haskell >= 2.3 && < 2.9
   -- Other-modules:       
   -- Build-tools:         
