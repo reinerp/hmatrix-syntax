@@ -17,6 +17,9 @@ Category:            Math
 Build-type:          Simple
 -- Extra-source-files:
 Cabal-version:       >=1.2
+source-repository head
+  type:      git
+  location:  git://github.com/reinerp/hmatrix-syntax.git
 
 Library
   Exposed-modules:     Data.Packed.Syntax
