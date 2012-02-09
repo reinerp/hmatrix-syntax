@@ -4,16 +4,16 @@
 Name:                hmatrix-syntax
 Version:             0.1
 Synopsis:            MATLAB-like syntax for hmatrix vectors and matrices
--- Description:         
+-- Description:
 Homepage:            http://github.com/reinerp/hmatrix-syntax
 License:             GPL-3
 License-file:        LICENSE
 Author:              Reiner Pope
 Maintainer:          reiner.pope@gmail.com
--- Copyright:           
+-- Copyright:
 Category:            Math
 Build-type:          Simple
--- Extra-source-files:  
+-- Extra-source-files:
 Cabal-version:       >=1.2
 
 Library
@@ -25,5 +25,5 @@ Library
                        haskell-src-meta,
                        hmatrix,
                        template-haskell >= 2.3 && < 2.9
-  -- Other-modules:       
-  -- Build-tools:         
+  -- Other-modules:
+  -- Build-tools:

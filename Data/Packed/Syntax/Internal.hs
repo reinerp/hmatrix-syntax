@@ -43,12 +43,12 @@ splitAtLoc loc s = case splitAt (HSE.srcLine loc - 1) (lines s) of
 
 breakOnSemis :: (String -> HSE.ParseResult res) -> (String -> Either String res'th) -> String -> Either String [res'th]
 breakOnSemis parse parse'th s = case parse wrapped_s of
-  HSE.ParseOk{} -> 
-    case parse'th wrapped_s of 
+  HSE.ParseOk{} ->
+    case parse'th wrapped_s of
       Right r -> Right [r]
       Left msg -> Left msg
-  HSE.ParseFailed loc msg 
-    | msg == semiParseError -> 
+  HSE.ParseFailed loc msg
+    | msg == semiParseError ->
         case splitAtLoc loc wrapped_s of
           ('[': h, init -> t) -> (:) <$> parse'th (wrap h) <*> breakOnSemis parse parse'th t
     | otherwise -> Left msg

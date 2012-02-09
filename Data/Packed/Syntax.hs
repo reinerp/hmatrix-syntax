@@ -39,7 +39,7 @@ import Data.Packed.Development(
 -- or use as a pattern:
 --
 -- > swap [vec| x, y |] = [vec| y, x |]
--- 
+--
 -- The following language pragma is needed to use this syntax:
 --
 -- > {-# LANGUAGE QuasiQuotes, ViewPatterns #-}
@@ -49,13 +49,13 @@ vec = qq vecExp vecPat
 -- | Quasiquoter for matrices. For example, use as an expression:
 --
 -- > buildMat x y = [mat| x,     y;
--- >                      x + y, sin y |]      
+-- >                      x + y, sin y |]
 --
 -- or use as a pattern:
 --
 -- > adjugateMat2 [mat| a, b; c, d |] = [mat| d, -b; -c, a |]
 --
--- If row sizes don't match, this will be caught at compile time. 
+-- If row sizes don't match, this will be caught at compile time.
 -- The following language pragma is needed to use this syntax:
 --
 -- > {-# LANGUAGE QuasiQuotes, ViewPatterns #-}
@@ -73,7 +73,7 @@ vecExp s = case listExp s of
   Right es -> buildVectorST es
   Left msg -> fail msg
 
-buildVectorST es = 
+buildVectorST es =
   [| runSTVector (do
                      v <- newUndefinedVector $( lift (length es) )
                      $( let buildWrites _i [] = [| return () |]
@@ -96,7 +96,7 @@ vecPat s = case listPat s of
   Left msg -> fail msg
 
 matExp s = case matListExp s of
-  Right (_, _, rows) -> buildMatST rows                                                         
+  Right (_, _, rows) -> buildMatST rows
   Left msg -> fail msg
 
 buildMatST :: [[TH.Exp]] -> Q TH.Exp
@@ -104,7 +104,7 @@ buildMatST es =
   let r = length es
       c = length (head es)
   in
-  [| runSTMatrix 
+  [| runSTMatrix
        (do
           m <- newUndefinedMatrix RowMajor r c
           $( let writes = [ [| unsafeWriteMatrix m ir ic $(return $ es !! ir !! ic) |] | ir <- [0..r-1], ic <- [0..c-1] ]
@@ -114,12 +114,12 @@ buildMatST es =
 
 matPat s = case matListPat s of
   Right (rowLen, colLen, rows) ->
-    viewP (buildToLists colLen rowLen) 
+    viewP (buildToLists colLen rowLen)
           (conP 'Just [return $ ListP $ map ListP rows])
   Left msg -> fail msg
 
 buildToLists r c =
   [| \m -> if (rows m, cols m) /= (r, c) then Nothing
-           else Just 
+           else Just
                 $( TH.listE [ TH.listE [ [| atM' m ir ic |] | ic <- [0..c-1] ] | ir <- [0..r-1] ] )
    |]
