@@ -1,6 +1,10 @@
 {-# LANGUAGE TemplateHaskell, ViewPatterns #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns -fno-warn-name-shadowing #-}
 
+-- |
+-- The main import. Modules using these quasiquoters need the following language pragma:
+--
+-- > {-# LANGUAGE QuasiQuotes, ViewPatterns #-}
 module Data.Packed.Syntax(vec, mat) where
 
 import Data.Packed.Syntax.Internal
@@ -39,10 +43,6 @@ import Data.Packed.Development(
 -- or use as a pattern:
 --
 -- > swap [vec| x, y |] = [vec| y, x |]
---
--- The following language pragma is needed to use this syntax:
---
--- > {-# LANGUAGE QuasiQuotes, ViewPatterns #-}
 vec :: QuasiQuoter
 vec = qq vecExp vecPat
 
@@ -56,9 +56,6 @@ vec = qq vecExp vecPat
 -- > adjugateMat2 [mat| a, b; c, d |] = [mat| d, -b; -c, a |]
 --
 -- If row sizes don't match, this will be caught at compile time.
--- The following language pragma is needed to use this syntax:
---
--- > {-# LANGUAGE QuasiQuotes, ViewPatterns #-}
 mat :: QuasiQuoter
 mat = qq matExp matPat
 

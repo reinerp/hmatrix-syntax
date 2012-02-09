@@ -1,4 +1,7 @@
 {-# LANGUAGE ViewPatterns #-}
+{- |
+Internal parsers. Most users should not need to use this module.
+-}
 module Data.Packed.Syntax.Internal(
   listExp,
   listPat,
@@ -18,12 +21,14 @@ import Control.Applicative
 -- list parsing
 wrap s = "[" ++ s ++ "]"
 
+-- | Parser for list expressions
 listExp :: String -> Either String [TH.Exp]
 listExp s = case MT.parseExp (wrap s) of
   Right (TH.ListE es) -> return es
   Right _ -> fail "unexpected parse"
   Left msg -> fail msg
 
+-- | Parser for list patterns
 listPat :: String -> Either String [TH.Pat]
 listPat s = case MT.parsePat (wrap s) of
   Right (TH.ListP ps) -> return ps
@@ -57,7 +62,7 @@ breakOnSemis parse parse'th s = case parse wrapped_s of
 
 unList (TH.ListE l) = l
 
--- | (outer length, inner length, matrix)
+-- | Parser for matrix expressions. Returns (outer length, inner length, matrix)
 matListExp :: String -> Either String (Int, Int, [[TH.Exp]])
 matListExp s = case breakOnSemis HSE.parseExp MT.parseExp s of
   Right rows@(r:_) ->
@@ -72,7 +77,7 @@ matListExp s = case breakOnSemis HSE.parseExp MT.parseExp s of
 
 unPList (TH.ListP l) = l
 
--- | (outer length, inner length, matrix)
+-- | Parser for matrix patterns. Returns (outer length, inner length, matrix)
 matListPat :: String -> Either String (Int, Int, [[TH.Pat]])
 matListPat s = case breakOnSemis HSE.parsePat MT.parsePat s of
   Right rows@(r:_) ->
