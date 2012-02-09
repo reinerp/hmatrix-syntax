@@ -9,10 +9,28 @@ import Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote as TH
 import Language.Haskell.TH.Syntax as TH
 
-import Data.Packed.Vector
-import Data.Packed.Matrix
-import Data.Packed.ST
-import Data.Packed.Development(MatrixOrder(..), at', atM')
+import Data.Packed.Vector(
+  Vector,
+  dim,
+  )
+import Data.Packed.Matrix(
+  Matrix,
+  rows,
+  cols,
+  )
+import Data.Packed.ST(
+  runSTVector,
+  newUndefinedVector,
+  unsafeWriteVector,
+  runSTMatrix,
+  newUndefinedMatrix,
+  unsafeWriteMatrix,
+ )
+import Data.Packed.Development(
+  MatrixOrder(..),
+  at',
+  atM',
+  )
 
 -- | Quasiquoter for vectors. For example, use as an expression:
 --
