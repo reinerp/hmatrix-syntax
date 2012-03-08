@@ -1,5 +1,5 @@
 Name:                hmatrix-syntax
-Version:             0.1
+Version:             0.1.1
 Synopsis:            MATLAB-like syntax for hmatrix vectors and matrices
 Description:
   This package uses QuasiQuotes to provide a nice syntax for hmatrix
