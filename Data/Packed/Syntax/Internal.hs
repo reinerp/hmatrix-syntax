@@ -13,8 +13,7 @@ import qualified Language.Haskell.TH.Quote as TH
 import qualified Language.Haskell.TH.Syntax as TH
 
 import qualified Language.Haskell.Exts as HSE
---import qualified Language.Haskell.Meta.Parse.Careful as MT -- once supported on Hackage
-import qualified Language.Haskell.Meta.Parse as MT(parseExp, parsePat)
+import qualified Language.Haskell.Meta.Parse.Careful as MT(parseExp, parsePat)
 
 import Control.Applicative
 

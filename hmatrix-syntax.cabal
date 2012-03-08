@@ -24,10 +24,8 @@ Library
   Build-depends:
                        base < 5,
                        haskell-src-exts >= 1.8 && < 1.12,
-                       haskell-src-meta >= 0.5.0.3 && < 0.6,
+                       haskell-src-meta >= 0.5.1 && < 0.6,
                        hmatrix >= 0.13.1 && < 0.14,
-                       template-haskell == 2.7.*
-  -- TODO: relax template-haskell once haskell-src-meta handles
-  -- ambiguous infix expressions properly prior to template-haskell-2.7
+                       template-haskell >= 2.4 && < 2.9
   -- Other-modules:
   -- Build-tools:
