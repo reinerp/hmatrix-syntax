@@ -23,9 +23,9 @@ Library
                        Data.Packed.Syntax.Internal
   Build-depends:
                        base < 5,
-                       haskell-src-exts >= 1.8 && < 1.14,
-                       haskell-src-meta >= 0.5.1 && < 0.6,
-                       hmatrix >= 0.13.1 && < 0.15,
+                       haskell-src-exts >= 1.8 && < 1.15,
+                       haskell-src-meta >= 0.5.1 && < 0.7,
+                       hmatrix >= 0.13.1 && < 0.16,
                        template-haskell >= 2.4 && < 2.9
   -- Other-modules:
   -- Build-tools:
